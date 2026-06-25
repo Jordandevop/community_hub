@@ -27,6 +27,7 @@ import {
   fetchAllUsers,
   updateUser,
   updateUserStatus,
+  likeUser,
 } from "../features/users/usersSlice";
 import { payPremium } from "../features/payments/paymentsSlice";
 import { useForm } from "react-hook-form";
@@ -82,6 +83,7 @@ export default function DashboardPage() {
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [categoryName, setCategoryName] = useState("");
   const [editUser, setEditUser] = useState(false);
+  const [likedUsers, setLikedUsers] = useState({});
   const navigate = useNavigate();
 
   const {
@@ -244,6 +246,15 @@ export default function DashboardPage() {
       dispatch(fetchAllUsers());
     } catch (error) {
       console.error("Erreur modification statut :", error);
+    }
+  };
+
+  const handleLikeUser = async (organizerId) => {
+    try {
+      await dispatch(likeUser(organizerId)).unwrap();
+      setLikedUsers((prev) => ({ ...prev, [organizerId]: true }));
+    } catch (error) {
+      console.error("Erreur like :", error);
     }
   };
 
@@ -821,9 +832,38 @@ export default function DashboardPage() {
                                       <p className="text-muted small mb-1">
                                         📅 {event.start_date}
                                       </p>
-                                      <p className="text-muted small mb-0">
+                                      <p className="text-muted small mb-2">
                                         👤 {event.organizer_pseudo}
                                       </p>
+                                      <div className="d-flex gap-2">
+                                        <Button
+                                          variant="outline-primary"
+                                          size="sm"
+                                          onClick={() =>
+                                            navigate(`/events/${event.id}`)
+                                          }
+                                        >
+                                          Voir
+                                        </Button>
+                                        {event.user_id !== user?.id && ( // ← pas de like sur ses propres events
+                                          <Button
+                                            variant={
+                                              likedUsers[event.user_id]
+                                                ? "danger"
+                                                : "outline-danger"
+                                            }
+                                            size="sm"
+                                            disabled={likedUsers[event.user_id]}
+                                            onClick={() =>
+                                              handleLikeUser(event.user_id)
+                                            }
+                                          >
+                                            {likedUsers[event.user_id]
+                                              ? "❤️ Liké"
+                                              : "🤍 Liker"}
+                                          </Button>
+                                        )}
+                                      </div>
                                     </Card.Body>
                                   </Card>
                                 </Col>
