@@ -11,63 +11,69 @@ import CreateEventPage from "../pages/CreateEventPage";
 import EventsPage from "../pages/EventsPage";
 import EventDetailsPage from "../pages/EventDetailsPage";
 import SkillsPage from "../pages/SkillsPage";
+import EditEventPage from "../pages/EditEventPage"
 
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <MainLayout />,
-    children: [
-      {
-        index: true,
-        element: <HomePage />,
-      },
-      {
-        path: "login",
-        element: <LoginPage />,
-      },
-      {
-        path: "register",
-        element: <RegisterPage />,
-      },
-      {
-        path: "contact",
-        element: <ContactPage />,
-      },
-      {
-        path: "events",
-        element: <EventsPage />,
-      },
-      {
-        path: "skills",
-        element: <SkillsPage/>
-      },
-      {
-        path: "events/:id",
-        element: <EventDetailsPage/>
-      },
-      {
-        element: <ProtectedRoute />,
-        children: [
-          {
-            path: "dashboard",
-            element: <DashboardPage />,
-          },
-          {
-            path: "users",
-            element: <UsersPage />,
-          },
-          {
-            path: "events/create",
-            element: <CreateEventPage />,
-          },
-        ],
-      },
-    ],
-  },
-],
-// {
-//   basename: "/community-hub",
-// }
+const router = createBrowserRouter(
+  [
+    {
+      path: "/",
+      element: <MainLayout />,
+      children: [
+        {
+          index: true,
+          element: <HomePage />,
+        },
+        {
+          path: "login",
+          element: <LoginPage />,
+        },
+        {
+          path: "register",
+          element: <RegisterPage />,
+        },
+        {
+          path: "contact",
+          element: <ContactPage />,
+        },
+        {
+          path: "events",
+          element: <EventsPage />,
+        },
+        {
+          path: "skills",
+          element: <SkillsPage />,
+        },
+        {
+          path: "events/:id",
+          element: <EventDetailsPage />,
+        },
+        {
+          element: <ProtectedRoute />,
+          children: [
+            {
+              path: "dashboard",
+              element: <DashboardPage />,
+            },
+            {
+              path: "users",
+              element: <UsersPage />,
+            },
+            {
+              path: "events/create",
+              element: <CreateEventPage />,
+            },
+            { 
+              path: "events/:id/edit",
+              element: <EditEventPage /> 
+            },
+          ],
+        },
+      ],
+    },
+  ],
+  // {
+  //   basename: "/community-hub",
+  // }
 );
 
 export default router;

@@ -50,15 +50,14 @@ function EventDetailsPage() {
         registerToEvent({
           event_id: current.id,
           payment_method: paymentMethod,
-        })
+        }),
       ).unwrap();
       setRegisterSuccess(true);
-      dispatch(fetchEventById(id)); 
+      dispatch(fetchEventById(id));
     } catch (error) {
       setRegisterError(error);
     }
   };
-
 
   const handleSendMessage = async () => {
     if (!messageText.trim()) return;
@@ -67,15 +66,14 @@ function EventDetailsPage() {
         sendEventMessage({
           event_id: current.id,
           message: messageText,
-        })
+        }),
       ).unwrap();
       setMessageText("");
-      dispatch(fetchEventById(id)); 
+      dispatch(fetchEventById(id));
     } catch (error) {
       console.error("Erreur envoi message : ", error);
     }
   };
-
 
   if (status === "loading" || !current) {
     return (
@@ -90,7 +88,6 @@ function EventDetailsPage() {
 
   return (
     <Container className="py-5">
-
       <Button
         variant="outline-secondary"
         size="sm"
@@ -99,6 +96,16 @@ function EventDetailsPage() {
       >
         ← Retour aux événements
       </Button>
+      {(user?.id === current.user_id || user?.user_status_id === 3) && (
+        <Button
+          variant="outline-warning"
+          size="sm"
+          className="mb-4 ms-2"
+          onClick={() => navigate(`/events/${id}/edit`)}
+        >
+          ✏️ Modifier l'événement
+        </Button>
+      )}
 
       <Card className="border-0 shadow-sm rounded-4 mb-4">
         <Card.Body className="p-4">
@@ -111,23 +118,24 @@ function EventDetailsPage() {
 
           {registerSuccess && (
             <Alert variant="success">
-              ✅ Inscription confirmée ! Un email de confirmation vous a été envoyé.
+              ✅ Inscription confirmée ! Un email de confirmation vous a été
+              envoyé.
             </Alert>
           )}
 
-          {registerError && (
-            <Alert variant="danger">{registerError}</Alert>
-          )}
+          {registerError && <Alert variant="danger">{registerError}</Alert>}
 
           {!user && (
             <Alert variant="info">
-              <Link to="/login">Connectez-vous</Link> pour vous inscrire à cet événement.
+              <Link to="/login">Connectez-vous</Link> pour vous inscrire à cet
+              événement.
             </Alert>
           )}
 
           {user && !user.is_premium && (
             <Alert variant="warning">
-              ⭐ Devenez <Link to="/dashboard">membre Premium</Link> pour vous inscrire aux événements.
+              ⭐ Devenez <Link to="/dashboard">membre Premium</Link> pour vous
+              inscrire aux événements.
             </Alert>
           )}
 
@@ -197,7 +205,8 @@ function EventDetailsPage() {
                     </div>
 
                     <div className="text-muted small mb-3">
-                      ℹ️ Le site prélève une taxe de 10% - l'organisateur recevra{" "}
+                      ℹ️ Le site prélève une taxe de 10% - l'organisateur
+                      recevra{" "}
                       <strong>{(current.price * 0.9).toFixed(2)} €</strong>.
                     </div>
 
@@ -270,7 +279,6 @@ function EventDetailsPage() {
           )}
         </Card.Body>
       </Card>
-
     </Container>
   );
 }

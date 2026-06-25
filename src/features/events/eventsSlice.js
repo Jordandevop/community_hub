@@ -94,6 +94,8 @@ export const fetchMyRegistrations = createAsyncThunk(
   },
 );
 
+
+
 export const sendEventMessage = createAsyncThunk(
   "events/sendEventMessage",
   async (messageData, { rejectWithValue }) => {
@@ -136,6 +138,20 @@ export const addCategory = createAsyncThunk(
       return rejectWithValue(error.message);
     }
   },
+);
+
+export const updateEvent = createAsyncThunk(
+  "events/updateEvent",
+  async (eventData, { rejectWithValue }) => {
+    try {
+      return await apiRequest("/events/update.php", {
+        method: "POST",
+        body: JSON.stringify(eventData),
+      });
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
 );
 
 const eventsSlice = createSlice({
@@ -220,7 +236,17 @@ const eventsSlice = createSlice({
       .addCase(addCategory.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload;
-      });
+      })
+      .addCase(updateEvent.pending, (state) =>{
+        state.status= 'loading';
+      })
+      .addCase(updateEvent.fulfilled, (state, action) => {
+        state.status= 'succeeded';
+      })
+      .addCase(updateEvent.rejected, (state,action) => {
+        state.status= 'failed';
+        state.error= action.payload;
+      })
   },
 });
 
