@@ -1,4 +1,4 @@
-# CommunityHub — Documentation Technique
+# CommunityHub - Documentation Technique
 
 ## Présentation du projet
 
@@ -53,7 +53,7 @@ src/
 
 ### React
 
-React a été choisi pour sa popularité en entreprise, son écosystème mature et sa compatibilité avec les outils modernes (Vite, Redux Toolkit). L'approche par composants permet de découper l'interface en unités réutilisables et maintenables — par exemple, `EventCard` est utilisé à la fois sur `EventsPage` et dans le Dashboard, `SkillCard` sur `SkillsPage` et la `HomePage`.
+React a été choisi pour sa popularité en entreprise, son écosystème mature et sa compatibilité avec les outils modernes (Vite, Redux Toolkit). L'approche par composants permet de découper l'interface en unités réutilisables et maintenables - par exemple, `EventCard` est utilisé à la fois sur `EventsPage` et dans le Dashboard, `SkillCard` sur `SkillsPage` et la `HomePage`.
 
 ### Vite
 
@@ -98,7 +98,7 @@ La page de détail d'un événement est volontairement publique - tout le monde 
 React Hook Form gère les formulaires sans re-render à chaque frappe (mode "uncontrolled"), ce qui améliore les performances. Yup fournit les schémas de validation déclaratifs et lisibles.
 
 **Validation conditionnelle avec `.when()`**
-Le formulaire de création d'événement utilise la validation conditionnelle Yup pour le champ `price` — il n'est requis que si `price_type === "payant"` :
+Le formulaire de création d'événement utilise la validation conditionnelle Yup pour le champ `price` - il n'est requis que si `price_type === "payant"` :
 ```js
 price: yup.number().when("price_type", {
     is: "payant",
@@ -108,7 +108,7 @@ price: yup.number().when("price_type", {
 ```
 
 **Validation croisée avec `.test()`**
-La date de fin ne peut pas être antérieure à la date de début — validée avec `.test()` qui accède aux autres champs via `this.parent`.
+La date de fin ne peut pas être antérieure à la date de début - validée avec `.test()` qui accède aux autres champs via `this.parent`.
 
 ### Client HTTP centralisé (apiClient.js)
 
@@ -132,20 +132,20 @@ React Bootstrap a été choisi pour sa compatibilité native avec React (pas de 
 L'API retourne un token JWT à la connexion, stocké en localStorage. Ce token est envoyé dans le header `X-Auth-Token` à chaque requête. À la déconnexion, le token et les données utilisateur sont supprimés du localStorage et du state Redux.
 
 **Protection des routes**
-Le composant `ProtectedRoute` vérifie la présence du token Redux avant de rendre les routes enfants. Si absent, l'utilisateur est redirigé vers `/login`.
+Le composant `ProtectedRoute` vérifie la présence du `user` et du `token` dans le state Redux avant de rendre les routes enfants. Si l'un des deux est absent, l'utilisateur est redirigé vers `/login`.
 
 **Accès premium côté front**
-Les fonctionnalités premium (création d'événement, ajout de compétence, inscription aux événements) sont conditionnées par `user.is_premium` côté composant. La vraie protection reste côté API — le front ne fait qu'adapter l'interface.
+Les fonctionnalités premium (création d'événement, ajout de compétence, inscription aux événements) sont conditionnées par `user.is_premium` côté composant. La vraie protection reste côté API - le front ne fait qu'adapter l'interface.
 
 **Accès admin**
-L'onglet Administration du Dashboard n'est rendu que si `user.user_status_id === 3`. Même principe — la sécurité réelle est assurée par l'API.
+L'onglet Administration du Dashboard n'est rendu que si `user.user_status_id === 3`. Même principe - la sécurité réelle est assurée par l'API.
 
 ---
 
 ## Patterns réutilisables
 
 **Composants "card" découplés**
-`EventCard` et `SkillCard` reçoivent leurs données en props et n'ont aucune dépendance Redux — ils sont purement présentationnels. Cela permet de les utiliser dans plusieurs contextes (listing public, dashboard, homepage) sans duplication.
+`EventCard` et `SkillCard` reçoivent leurs données en props et n'ont aucune dépendance Redux - ils sont purement présentationnels. Cela permet de les utiliser dans plusieurs contextes (listing public, dashboard, homepage) sans duplication.
 
 **Feedback utilisateur par entité**
 Pour les actions asynchrones en liste (ex : ajouter un contact depuis la Communauté), un state local `{ [userId]: 'sending' | 'sent' | 'error' }` gère l'état de chaque bouton indépendamment, sans bloquer les autres.
@@ -166,4 +166,34 @@ La clé projet est obligatoire sur tous les endpoints API via le header `X-Proje
 
 ---
 
+## Tests unitaires
+
+### Outils utilisés
+
+| Outil | Rôle |
+|---|---|
+| Vitest | Runner de tests, compatible Vite |
+| React Testing Library | Rendu et sélection d'éléments DOM |
+| @testing-library/jest-dom | Matchers supplémentaires (`toBeInTheDocument`) |
+
+---
+
+### Test de ProtectedRoute
+
+**Fichier :** `src/components/ProtectedRoute.test.jsx`
+
+Le composant `ProtectedRoute` protège les routes privées en vérifiant le state Redux (`user` et `token`). Si l'un des deux est absent, l'utilisateur est redirigé vers `/login`.
+
+**Stratégie de test**
+Chaque test crée un store Redux minimal avec uniquement le reducer `auth`, et monte le composant dans un `MemoryRouter` simulant la route `/dashboard`.
+
+**Cas testés**
+
+| Cas | State auth | Résultat attendu |
+|---|---|---|
+| Utilisateur connecté | `user` + `token` présents | Dashboard affiché |
+| Utilisateur non connecté | `user: null`, `token: null` | Redirection vers `/login` |
+| Token absent | `user` présent, `token: null` | Redirection vers `/login` |
+
+**Résultat :** 3/3 tests passés ✅
 

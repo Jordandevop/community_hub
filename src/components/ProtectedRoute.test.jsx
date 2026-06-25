@@ -73,4 +73,24 @@ describe("Test ProtectedRoute", () => {
 
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
   });
+
+  test("Redirige vers la page login si user n'est pas connecté", () => {
+    const userNotConnect = {
+        user: null,
+        token: null,
+    };
+
+    renderWithStore(userNotConnect);
+
+    expect(screen.getByText('Page login')).toBeInTheDocument();
+  });
+
+  test("Affiche la page login si le token est absent", ()=>{
+    const userNotToken = {
+      user: {id: 1, username: 'Jordan'},
+      token: null,
+    };
+    renderWithStore(userNotToken);
+    expect(screen.getByText('Page login')).toBeInTheDocument();
+  })
 });
