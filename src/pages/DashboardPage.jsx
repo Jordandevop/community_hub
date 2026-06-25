@@ -23,7 +23,11 @@ import {
   sendContactRequest,
 } from "../features/contacts/contactsSlice";
 import { fetchMessages, sendMessage } from "../features/messages/messagesSlice";
-import { fetchAllUsers } from "../features/users/usersSlice";
+import {
+  fetchAllUsers,
+  updateUser,
+  updateUserStatus,
+} from "../features/users/usersSlice";
 import { payPremium } from "../features/payments/paymentsSlice";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
@@ -35,7 +39,6 @@ import {
   fetchMyRegistrations,
 } from "../features/events/eventsSlice";
 import { useNavigate } from "react-router-dom";
-import { updateUser } from "../features/users/usersSlice";
 
 const skillSchema = yup.object({
   title: yup.string().required("Le titre est requis"),
@@ -227,6 +230,20 @@ export default function DashboardPage() {
       setEditUser(false);
     } catch (error) {
       console.error("Erreur modification profil :", error);
+    }
+  };
+
+  const handleUpdateStatus = async (userId, newStatusId) => {
+    try {
+      await dispatch(
+        updateUserStatus({
+          user_id: userId,
+          user_status_id: Number(newStatusId),
+        }),
+      ).unwrap();
+      dispatch(fetchAllUsers());
+    } catch (error) {
+      console.error("Erreur modification statut :", error);
     }
   };
 
@@ -1307,6 +1324,23 @@ export default function DashboardPage() {
                                   )}
                                 </div>
                               </div>
+                              {member.id !== user?.id && (
+                                <Form.Select
+                                  size="sm"
+                                  style={{ width: "150px" }}
+                                  value={member.user_status_id}
+                                  onChange={(e) =>
+                                    handleUpdateStatus(
+                                      member.id,
+                                      e.target.value,
+                                    )
+                                  }
+                                >
+                                  <option value={1}>Membre</option>
+                                  <option value={2}>Organisateur</option>
+                                  <option value={3}>Admin</option>
+                                </Form.Select>
+                              )}
                             </ListGroup.Item>
                           ))}
                         </ListGroup>

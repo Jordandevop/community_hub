@@ -26,6 +26,19 @@ export const updateUser = createAsyncThunk(
   },
 );
 
+export const updateUserStatus = createAsyncThunk(
+  "users/updateUserStatus",
+  async (data, { rejectWithValue }) => {
+    try {
+      return await apiRequest("/users/update-status.php", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+);
 const usersSlice = createSlice({
   name: "users",
   initialState: { list: [], status: "idle", error: null },
@@ -51,6 +64,16 @@ const usersSlice = createSlice({
         state.status = "succeeded";
       })
       .addCase(updateUser.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload;
+      })
+      .addCase(updateUserStatus.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(updateUserStatus.fulfilled, (state, action) => {
+        state.status = "succeeded";
+      })
+      .addCase(updateUserStatus.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload;
       });
