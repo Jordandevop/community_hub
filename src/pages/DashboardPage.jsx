@@ -845,7 +845,7 @@ export default function DashboardPage() {
                                         >
                                           Voir
                                         </Button>
-                                        {event.user_id !== user?.id && ( // ← pas de like sur ses propres events
+                                        {event.user_id !== user?.id && ( 
                                           <Button
                                             variant={
                                               likedUsers[event.user_id]
@@ -859,8 +859,9 @@ export default function DashboardPage() {
                                             }
                                           >
                                             {likedUsers[event.user_id]
-                                              ? "❤️ Liké"
-                                              : "🤍 Liker"}
+                                              ? "❤️"
+                                              : "🤍"}{" "}
+                                            {event.organizer_likes_count || 0}
                                           </Button>
                                         )}
                                       </div>

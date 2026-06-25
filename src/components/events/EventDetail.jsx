@@ -16,7 +16,6 @@ function EventDetail({ event }) {
       </div>
 
       <p className="text-muted mb-4">{event.introduction}</p>
-
       <Row className="g-3">
         <Col md={3}>
           <div className="small text-muted">📅 Début</div>
@@ -26,11 +25,11 @@ function EventDetail({ event }) {
           <div className="small text-muted">📅 Fin</div>
           <div className="fw-semibold">{event.end_date}</div>
         </Col>
-        <Col md={3}>
+        <Col md={2}>
           <div className="small text-muted">👤 Organisateur</div>
           <div className="fw-semibold">{event.organizer_pseudo}</div>
         </Col>
-        <Col md={3}>
+        <Col md={2}>
           <div className="small text-muted">👥 Participants</div>
           <div className="fw-semibold">
             {event.participants_count} / {event.max_participants}
@@ -38,6 +37,10 @@ function EventDetail({ event }) {
               <Badge bg="danger" className="ms-2">Complet</Badge>
             )}
           </div>
+        </Col>
+        <Col md={2}>
+          <div className="small text-muted">❤️ Likes</div>
+          <div className="fw-semibold">{event.organizer_likes_count || 0}</div>
         </Col>
       </Row>
     </>
