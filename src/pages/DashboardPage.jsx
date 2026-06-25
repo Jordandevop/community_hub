@@ -15,7 +15,7 @@ import {
   Modal,
 } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
-import { logout } from "../features/auth/authSlice";
+import { logout, updateLocalUser } from "../features/auth/authSlice";
 import { fetchSkills, addSkill } from "../features/skills/skillsSlice";
 import {
   fetchContacts,
@@ -32,9 +32,10 @@ import {
   addCategory,
   fetchCategories,
   fetchEvents,
-  fetchMyRegistrations
+  fetchMyRegistrations,
 } from "../features/events/eventsSlice";
 import { useNavigate } from "react-router-dom";
+import { updateUser } from "../features/users/usersSlice";
 
 const skillSchema = yup.object({
   title: yup.string().required("Le titre est requis"),
@@ -58,7 +59,9 @@ export default function DashboardPage() {
   const { list: contactsList, status: contactsStatus } = useSelector(
     (state) => state.contacts,
   );
-  const { list, categories, status, myRegistrations} = useSelector((state) => state.events);
+  const { list, categories, status, myRegistrations } = useSelector(
+    (state) => state.events,
+  );
   const {
     received: receivedMessages,
     sent: sentMessages,
@@ -75,6 +78,7 @@ export default function DashboardPage() {
   const [contactFeedback, setContactFeedback] = useState({});
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [categoryName, setCategoryName] = useState("");
+  const [editUser, setEditUser] = useState(false);
   const navigate = useNavigate();
 
   const {
@@ -194,6 +198,36 @@ export default function DashboardPage() {
       (c) => c.receiver_id === memberId || c.requester_id === memberId,
     );
     return relation ? relation.status : null;
+  };
+
+  const {
+    register: registerProfile,
+    handleSubmit: handleSubmitProfile,
+    formState: { errors: profileErrors },
+  } = useForm({
+    defaultValues: {
+      firstname: user?.firstname || "",
+      lastname: user?.lastname || "",
+      pseudo: user?.pseudo || "",
+      email: user?.email || "",
+      address: user?.address || "",
+      postal_code: user?.postal_code || "",
+      city: user?.city || "",
+      phone: user?.phone || "",
+      avatar: user?.avatar || "",
+      birthdate: user?.birthdate || "",
+      password: "",
+    },
+  });
+
+  const onSubmitProfile = async (data) => {
+    try {
+      await dispatch(updateUser(data)).unwrap();
+      dispatch(updateLocalUser(data));
+      setEditUser(false);
+    } catch (error) {
+      console.error("Erreur modification profil :", error);
+    }
   };
 
   const renderAddContactButton = (member) => {
@@ -343,145 +377,451 @@ export default function DashboardPage() {
               <Tab.Pane eventKey="profil">
                 <Card className="border-0 shadow-sm rounded-4 mb-4">
                   <Card.Body className="p-4">
-                    <h4 className="fw-bold mb-4">Informations personnelles</h4>
-                    <Row className="mb-3">
-                      <Col sm={4} className="text-muted">
-                        Nom complet
-                      </Col>
-                      <Col sm={8} className="fw-semibold">
-                        {user?.firstname} {user?.lastname}
-                      </Col>
-                    </Row>
-                    <Row className="mb-3">
-                      <Col sm={4} className="text-muted">
-                        Pseudo
-                      </Col>
-                      <Col sm={8} className="fw-semibold">
-                        {user?.pseudo}
-                      </Col>
-                    </Row>
-                    <Row className="mb-3">
-                      <Col sm={4} className="text-muted">
-                        Email
-                      </Col>
-                      <Col sm={8} className="fw-semibold">
-                        {user?.email}
-                      </Col>
-                    </Row>
-                    <Row className="mb-3">
-                      <Col sm={4} className="text-muted">
-                        Ville
-                      </Col>
-                      <Col sm={8} className="fw-semibold">
-                        {user?.city} ({user?.postal_code})
-                      </Col>
-                    </Row>
+                    <div className="d-flex justify-content-between align-items-center mb-4">
+                      <h4 className="fw-bold mb-0">
+                        Informations personnelles
+                      </h4>
+                      <Button
+                        variant={
+                          editUser ? "outline-secondary" : "outline-primary"
+                        }
+                        size="sm"
+                        onClick={() => setEditUser(!editUser)}
+                      >
+                        {editUser ? "Annuler" : "✏️ Modifier"}
+                      </Button>
+                    </div>
+
+                    {!editUser ? (
+                      <>
+                        <Row className="mb-3">
+                          <Col sm={4} className="text-muted">
+                            Avatar
+                          </Col>
+                          <Col sm={8}>
+                            {user?.avatar ? (
+                              <img
+                                src={user.avatar}
+                                alt="Avatar"
+                                className="rounded-circle"
+                                style={{
+                                  width: "60px",
+                                  height: "60px",
+                                  objectFit: "cover",
+                                }}
+                                onError={(e) => {
+                                  e.target.style.display = "none";
+                                }}
+                              />
+                            ) : (
+                              <span className="text-muted fst-italic">
+                                Non renseigné
+                              </span>
+                            )}
+                          </Col>
+                        </Row>
+                        <Row className="mb-3">
+                          <Col sm={4} className="text-muted">
+                            Nom complet
+                          </Col>
+                          <Col sm={8} className="fw-semibold">
+                            {user?.firstname} {user?.lastname}
+                          </Col>
+                        </Row>
+                        <Row className="mb-3">
+                          <Col sm={4} className="text-muted">
+                            Pseudo
+                          </Col>
+                          <Col sm={8} className="fw-semibold">
+                            {user?.pseudo}
+                          </Col>
+                        </Row>
+                        <Row className="mb-3">
+                          <Col sm={4} className="text-muted">
+                            Email
+                          </Col>
+                          <Col sm={8} className="fw-semibold">
+                            {user?.email}
+                          </Col>
+                        </Row>
+                        <Row className="mb-3">
+                          <Col sm={4} className="text-muted">
+                            Ville
+                          </Col>
+                          <Col sm={8} className="fw-semibold">
+                            {user?.city} ({user?.postal_code})
+                          </Col>
+                        </Row>
+                        <Row className="mb-3">
+                          <Col sm={4} className="text-muted">
+                            Adresse
+                          </Col>
+                          <Col sm={8} className="fw-semibold">
+                            {user?.address}
+                          </Col>
+                        </Row>
+                        <Row className="mb-3">
+                          <Col sm={4} className="text-muted">
+                            Téléphone
+                          </Col>
+                          <Col sm={8} className="fw-semibold">
+                            {user?.phone || (
+                              <span className="text-muted fst-italic">
+                                Non renseigné
+                              </span>
+                            )}
+                          </Col>
+                        </Row>
+                      </>
+                    ) : (
+                      <Form onSubmit={handleSubmitProfile(onSubmitProfile)}>
+                        <Row className="g-3 mb-3">
+                          <Col md={6}>
+                            <Form.Group controlId="edit_firstname">
+                              <Form.Label className="small fw-semibold text-secondary">
+                                Prénom
+                              </Form.Label>
+                              <Form.Control
+                                type="text"
+                                {...registerProfile("firstname")}
+                              />
+                            </Form.Group>
+                          </Col>
+                          <Col md={6}>
+                            <Form.Group controlId="edit_lastname">
+                              <Form.Label className="small fw-semibold text-secondary">
+                                Nom
+                              </Form.Label>
+                              <Form.Control
+                                type="text"
+                                {...registerProfile("lastname")}
+                              />
+                            </Form.Group>
+                          </Col>
+                          <Col md={6}>
+                            <Form.Group controlId="edit_pseudo">
+                              <Form.Label className="small fw-semibold text-secondary">
+                                Pseudo
+                              </Form.Label>
+                              <Form.Control
+                                type="text"
+                                {...registerProfile("pseudo")}
+                              />
+                            </Form.Group>
+                          </Col>
+                          <Col md={6}>
+                            <Form.Group controlId="edit_email">
+                              <Form.Label className="small fw-semibold text-secondary">
+                                Email
+                              </Form.Label>
+                              <Form.Control
+                                type="email"
+                                {...registerProfile("email")}
+                              />
+                            </Form.Group>
+                          </Col>
+                          <Col md={12}>
+                            <Form.Group controlId="edit_address">
+                              <Form.Label className="small fw-semibold text-secondary">
+                                Adresse
+                              </Form.Label>
+                              <Form.Control
+                                type="text"
+                                {...registerProfile("address")}
+                              />
+                            </Form.Group>
+                          </Col>
+                          <Col md={4}>
+                            <Form.Group controlId="edit_postal_code">
+                              <Form.Label className="small fw-semibold text-secondary">
+                                Code postal
+                              </Form.Label>
+                              <Form.Control
+                                type="text"
+                                {...registerProfile("postal_code")}
+                              />
+                            </Form.Group>
+                          </Col>
+                          <Col md={8}>
+                            <Form.Group controlId="edit_city">
+                              <Form.Label className="small fw-semibold text-secondary">
+                                Ville
+                              </Form.Label>
+                              <Form.Control
+                                type="text"
+                                {...registerProfile("city")}
+                              />
+                            </Form.Group>
+                          </Col>
+                          <Col md={6}>
+                            <Form.Group controlId="edit_phone">
+                              <Form.Label className="small fw-semibold text-secondary">
+                                Téléphone
+                              </Form.Label>
+                              <Form.Control
+                                type="text"
+                                {...registerProfile("phone")}
+                              />
+                            </Form.Group>
+                          </Col>
+                          <Col md={6}>
+                            <Form.Group controlId="edit_avatar">
+                              <Form.Label className="small fw-semibold text-secondary">
+                                Avatar (nom du fichier)
+                              </Form.Label>
+                              <Form.Control
+                                type="text"
+                                placeholder="Ex: avatar.png"
+                                {...registerProfile("avatar")}
+                              />
+                            </Form.Group>
+                          </Col>
+                          <Col md={6}>
+                            <Form.Group controlId="edit_password">
+                              <Form.Label className="small fw-semibold text-secondary">
+                                Nouveau mot de passe (vide = inchangé)
+                              </Form.Label>
+                              <Form.Control
+                                type="password"
+                                {...registerProfile("password")}
+                              />
+                            </Form.Group>
+                          </Col>
+                        </Row>
+                        <div className="d-flex justify-content-end gap-2">
+                          <Button
+                            variant="outline-secondary"
+                            size="sm"
+                            onClick={() => setEditUser(false)}
+                          >
+                            Annuler
+                          </Button>
+                          <Button type="submit" variant="success" size="sm">
+                            ✅ Enregistrer
+                          </Button>
+                        </div>
+                      </Form>
+                    )}
                   </Card.Body>
                 </Card>
               </Tab.Pane>
 
               <Tab.Pane eventKey="evenements">
-  <Card className="border-0 shadow-sm rounded-4">
-    <Card.Body className="p-4">
-      <h4 className="fw-bold mb-4">📅 Mes Événements</h4>
+                <Card className="border-0 shadow-sm rounded-4">
+                  <Card.Body className="p-4">
+                    <h4 className="fw-bold mb-4">📅 Mes Événements</h4>
 
-      {!user?.is_premium ? (
-        <Alert variant="warning" className="text-center">
-          <Alert.Heading>Fonctionnalité Premium 🌟</Alert.Heading>
-          <p className="mb-0">Tu dois être Premium pour créer des événements.</p>
-        </Alert>
-      ) : (
-        <>
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <p className="text-muted mb-0">Tes événements organisés.</p>
-            <Button variant="primary" size="sm" onClick={() => navigate("/events/create")}>
-              + Créer un événement
-            </Button>
-          </div>
+                    {!user?.is_premium ? (
+                      <Alert variant="warning" className="text-center">
+                        <Alert.Heading>Fonctionnalité Premium 🌟</Alert.Heading>
+                        <p className="mb-0">
+                          Tu dois être Premium pour créer des événements.
+                        </p>
+                      </Alert>
+                    ) : (
+                      <>
+                        <div className="d-flex justify-content-between align-items-center mb-4">
+                          <p className="text-muted mb-0">
+                            Tes événements organisés.
+                          </p>
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => navigate("/events/create")}
+                          >
+                            + Créer un événement
+                          </Button>
+                        </div>
 
-          <h6 className="fw-bold text-success mb-3">🟢 En cours / À venir</h6>
-          {list.filter(e => e.user_id === user?.id && new Date(e.end_date) >= new Date()).length > 0 ? (
-            <Row className="g-3 mb-4">
-              {list.filter(e => e.user_id === user?.id && new Date(e.end_date) >= new Date()).map(event => (
-                <Col md={6} key={event.id}>
-                  <Card className="border-0 shadow-sm bg-light h-100">
-                    <Card.Body>
-                      <div className="d-flex justify-content-between align-items-start mb-2">
-                        <h6 className="fw-bold mb-0">{event.name}</h6>
-                        {event.price_type === "gratuit" ? <Badge bg="success">Gratuit</Badge> : <Badge bg="danger">{event.price} €</Badge>}
-                      </div>
-                      <p className="text-muted small mb-1">📅 {event.start_date}</p>
-                      <p className="text-muted small mb-2">👥 {event.participants_count} / {event.max_participants}</p>
-                      <Button variant="outline-primary" size="sm" onClick={() => navigate(`/events/${event.id}`)}>Voir</Button>
-                    </Card.Body>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-          ) : <p className="text-muted small mb-4">Aucun événement en cours.</p>}
+                        <h6 className="fw-bold text-success mb-3">
+                          🟢 En cours / À venir
+                        </h6>
+                        {list.filter(
+                          (e) =>
+                            e.user_id === user?.id &&
+                            new Date(e.end_date) >= new Date(),
+                        ).length > 0 ? (
+                          <Row className="g-3 mb-4">
+                            {list
+                              .filter(
+                                (e) =>
+                                  e.user_id === user?.id &&
+                                  new Date(e.end_date) >= new Date(),
+                              )
+                              .map((event) => (
+                                <Col md={6} key={event.id}>
+                                  <Card className="border-0 shadow-sm bg-light h-100">
+                                    <Card.Body>
+                                      <div className="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 className="fw-bold mb-0">
+                                          {event.name}
+                                        </h6>
+                                        {event.price_type === "gratuit" ? (
+                                          <Badge bg="success">Gratuit</Badge>
+                                        ) : (
+                                          <Badge bg="danger">
+                                            {event.price} €
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <p className="text-muted small mb-1">
+                                        📅 {event.start_date}
+                                      </p>
+                                      <p className="text-muted small mb-2">
+                                        👥 {event.participants_count} /{" "}
+                                        {event.max_participants}
+                                      </p>
+                                      <Button
+                                        variant="outline-primary"
+                                        size="sm"
+                                        onClick={() =>
+                                          navigate(`/events/${event.id}`)
+                                        }
+                                      >
+                                        Voir
+                                      </Button>
+                                    </Card.Body>
+                                  </Card>
+                                </Col>
+                              ))}
+                          </Row>
+                        ) : (
+                          <p className="text-muted small mb-4">
+                            Aucun événement en cours.
+                          </p>
+                        )}
 
-          <h6 className="fw-bold text-secondary mb-3">⚫ Passés</h6>
-          {list.filter(e => e.user_id === user?.id && new Date(e.end_date) < new Date()).length > 0 ? (
-            <Row className="g-3 mb-4">
-              {list.filter(e => e.user_id === user?.id && new Date(e.end_date) < new Date()).map(event => (
-                <Col md={6} key={event.id}>
-                  <Card className="border-0 shadow-sm bg-light h-100 opacity-75">
-                    <Card.Body>
-                      <h6 className="fw-bold text-muted">{event.name}</h6>
-                      <p className="text-muted small mb-1">📅 {event.start_date}</p>
-                      <p className="text-muted small mb-0">👥 {event.participants_count} / {event.max_participants}</p>
-                    </Card.Body>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-          ) : <p className="text-muted small mb-4">Aucun événement passé.</p>}
+                        <h6 className="fw-bold text-secondary mb-3">
+                          ⚫ Passés
+                        </h6>
+                        {list.filter(
+                          (e) =>
+                            e.user_id === user?.id &&
+                            new Date(e.end_date) < new Date(),
+                        ).length > 0 ? (
+                          <Row className="g-3 mb-4">
+                            {list
+                              .filter(
+                                (e) =>
+                                  e.user_id === user?.id &&
+                                  new Date(e.end_date) < new Date(),
+                              )
+                              .map((event) => (
+                                <Col md={6} key={event.id}>
+                                  <Card className="border-0 shadow-sm bg-light h-100 opacity-75">
+                                    <Card.Body>
+                                      <h6 className="fw-bold text-muted">
+                                        {event.name}
+                                      </h6>
+                                      <p className="text-muted small mb-1">
+                                        📅 {event.start_date}
+                                      </p>
+                                      <p className="text-muted small mb-0">
+                                        👥 {event.participants_count} /{" "}
+                                        {event.max_participants}
+                                      </p>
+                                    </Card.Body>
+                                  </Card>
+                                </Col>
+                              ))}
+                          </Row>
+                        ) : (
+                          <p className="text-muted small mb-4">
+                            Aucun événement passé.
+                          </p>
+                        )}
 
-          <hr className="my-4" />
-          <h5 className="fw-bold mb-4">🎟️ Mes Inscriptions</h5>
+                        <hr className="my-4" />
+                        <h5 className="fw-bold mb-4">🎟️ Mes Inscriptions</h5>
 
-          <h6 className="fw-bold text-success mb-3">🟢 À venir</h6>
-          {myRegistrations.filter(e => new Date(e.end_date) >= new Date()).length > 0 ? (
-            <Row className="g-3 mb-4">
-              {myRegistrations.filter(e => new Date(e.end_date) >= new Date()).map(event => (
-                <Col md={6} key={event.id}>
-                  <Card className="border-0 shadow-sm bg-light h-100">
-                    <Card.Body>
-                      <div className="d-flex justify-content-between align-items-start mb-2">
-                        <h6 className="fw-bold mb-0">{event.name}</h6>
-                        {event.price_type === "gratuit" ? <Badge bg="success">Gratuit</Badge> : <Badge bg="danger">{event.price} €</Badge>}
-                      </div>
-                      <p className="text-muted small mb-1">📅 {event.start_date}</p>
-                      <p className="text-muted small mb-2">👤 {event.organizer_pseudo}</p>
-                      <Button variant="outline-primary" size="sm" onClick={() => navigate(`/events/${event.id}`)}>Voir</Button>
-                    </Card.Body>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-          ) : <p className="text-muted small mb-4">Aucune inscription à venir.</p>}
+                        <h6 className="fw-bold text-success mb-3">
+                          🟢 À venir
+                        </h6>
+                        {myRegistrations.filter(
+                          (e) => new Date(e.end_date) >= new Date(),
+                        ).length > 0 ? (
+                          <Row className="g-3 mb-4">
+                            {myRegistrations
+                              .filter((e) => new Date(e.end_date) >= new Date())
+                              .map((event) => (
+                                <Col md={6} key={event.id}>
+                                  <Card className="border-0 shadow-sm bg-light h-100">
+                                    <Card.Body>
+                                      <div className="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 className="fw-bold mb-0">
+                                          {event.name}
+                                        </h6>
+                                        {event.price_type === "gratuit" ? (
+                                          <Badge bg="success">Gratuit</Badge>
+                                        ) : (
+                                          <Badge bg="danger">
+                                            {event.price} €
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <p className="text-muted small mb-1">
+                                        📅 {event.start_date}
+                                      </p>
+                                      <p className="text-muted small mb-2">
+                                        👤 {event.organizer_pseudo}
+                                      </p>
+                                      <Button
+                                        variant="outline-primary"
+                                        size="sm"
+                                        onClick={() =>
+                                          navigate(`/events/${event.id}`)
+                                        }
+                                      >
+                                        Voir
+                                      </Button>
+                                    </Card.Body>
+                                  </Card>
+                                </Col>
+                              ))}
+                          </Row>
+                        ) : (
+                          <p className="text-muted small mb-4">
+                            Aucune inscription à venir.
+                          </p>
+                        )}
 
-          <h6 className="fw-bold text-secondary mb-3">⚫ Passées</h6>
-          {myRegistrations.filter(e => new Date(e.end_date) < new Date()).length > 0 ? (
-            <Row className="g-3">
-              {myRegistrations.filter(e => new Date(e.end_date) < new Date()).map(event => (
-                <Col md={6} key={event.id}>
-                  <Card className="border-0 shadow-sm bg-light h-100 opacity-75">
-                    <Card.Body>
-                      <h6 className="fw-bold text-muted">{event.name}</h6>
-                      <p className="text-muted small mb-1">📅 {event.start_date}</p>
-                      <p className="text-muted small mb-0">👤 {event.organizer_pseudo}</p>
-                    </Card.Body>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-          ) : <p className="text-muted small">Aucune inscription passée.</p>}
-        </>
-      )}
-    </Card.Body>
-  </Card>
-</Tab.Pane>
+                        <h6 className="fw-bold text-secondary mb-3">
+                          ⚫ Passées
+                        </h6>
+                        {myRegistrations.filter(
+                          (e) => new Date(e.end_date) < new Date(),
+                        ).length > 0 ? (
+                          <Row className="g-3">
+                            {myRegistrations
+                              .filter((e) => new Date(e.end_date) < new Date())
+                              .map((event) => (
+                                <Col md={6} key={event.id}>
+                                  <Card className="border-0 shadow-sm bg-light h-100 opacity-75">
+                                    <Card.Body>
+                                      <h6 className="fw-bold text-muted">
+                                        {event.name}
+                                      </h6>
+                                      <p className="text-muted small mb-1">
+                                        📅 {event.start_date}
+                                      </p>
+                                      <p className="text-muted small mb-0">
+                                        👤 {event.organizer_pseudo}
+                                      </p>
+                                    </Card.Body>
+                                  </Card>
+                                </Col>
+                              ))}
+                          </Row>
+                        ) : (
+                          <p className="text-muted small">
+                            Aucune inscription passée.
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </Card.Body>
+                </Card>
+              </Tab.Pane>
 
               <Tab.Pane eventKey="competences">
                 <Card className="border-0 shadow-sm rounded-4">
