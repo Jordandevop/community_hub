@@ -3,6 +3,7 @@ import { apiRequest } from "../../api/apiClient";
 
 const initialState = {
   list: [],
+  myRegistrations: [],
   current: null,
   categories: [],
   status: "idle",
@@ -72,6 +73,20 @@ export const registerToEvent = createAsyncThunk(
         method: "POST",
         body: JSON.stringify(registerData),
       });
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+);
+
+export const fetchMyRegistrations = createAsyncThunk(
+  "events/fetchMyRegistrations",
+  async (userId, { rejectWithValue }) => {
+    try {
+      const response = await apiRequest(
+        `/events/index.php?registered_user_id=${userId}`,
+      );
       return response;
     } catch (error) {
       return rejectWithValue(error.message);
@@ -151,6 +166,17 @@ const eventsSlice = createSlice({
         };
       })
       .addCase(fetchEventById.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload;
+      })
+      .addCase(fetchMyRegistrations.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(fetchMyRegistrations.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.myRegistrations = action.payload?.events || [];
+      })
+      .addCase(fetchMyRegistrations.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload;
       })

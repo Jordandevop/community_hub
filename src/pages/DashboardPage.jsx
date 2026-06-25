@@ -32,6 +32,7 @@ import {
   addCategory,
   fetchCategories,
   fetchEvents,
+  fetchMyRegistrations
 } from "../features/events/eventsSlice";
 import { useNavigate } from "react-router-dom";
 
@@ -57,7 +58,7 @@ export default function DashboardPage() {
   const { list: contactsList, status: contactsStatus } = useSelector(
     (state) => state.contacts,
   );
-  const { list, categories, status } = useSelector((state) => state.events);
+  const { list, categories, status, myRegistrations} = useSelector((state) => state.events);
   const {
     received: receivedMessages,
     sent: sentMessages,
@@ -104,6 +105,7 @@ export default function DashboardPage() {
     dispatch(fetchAllUsers());
     dispatch(fetchCategories());
     dispatch(fetchEvents());
+    dispatch(fetchMyRegistrations(user?.id));
   }, [dispatch]);
 
   const onSubmitSkill = async (data) => {
@@ -379,122 +381,107 @@ export default function DashboardPage() {
               </Tab.Pane>
 
               <Tab.Pane eventKey="evenements">
-                <Card className="border-0 shadow-sm rounded-4">
-                  <Card.Body className="p-4">
-                    <h4 className="fw-bold mb-4">📅 Mes Événements</h4>
+  <Card className="border-0 shadow-sm rounded-4">
+    <Card.Body className="p-4">
+      <h4 className="fw-bold mb-4">📅 Mes Événements</h4>
 
-                    {!user?.is_premium ? (
-                      <Alert variant="warning" className="text-center">
-                        <Alert.Heading>Fonctionnalité Premium 🌟</Alert.Heading>
-                        <p className="mb-0">
-                          Tu dois être Premium pour créer des événements.
-                        </p>
-                      </Alert>
-                    ) : (
-                      <>
+      {!user?.is_premium ? (
+        <Alert variant="warning" className="text-center">
+          <Alert.Heading>Fonctionnalité Premium 🌟</Alert.Heading>
+          <p className="mb-0">Tu dois être Premium pour créer des événements.</p>
+        </Alert>
+      ) : (
+        <>
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <p className="text-muted mb-0">Tes événements organisés.</p>
+            <Button variant="primary" size="sm" onClick={() => navigate("/events/create")}>
+              + Créer un événement
+            </Button>
+          </div>
 
-                        <h6 className="fw-bold text-success mb-3">
-                          🟢 En cours / À venir
-                        </h6>
-                        {list.filter(
-                          (e) =>
-                            e.user_id === user?.id &&
-                            new Date(e.end_date) >= new Date(),
-                        ).length > 0 ? (
-                          <Row className="g-3 mb-4">
-                            {list
-                              .filter(
-                                (e) =>
-                                  e.user_id === user?.id &&
-                                  new Date(e.end_date) >= new Date(),
-                              )
-                              .map((event) => (
-                                <Col md={6} key={event.id}>
-                                  <Card className="border-0 shadow-sm bg-light h-100">
-                                    <Card.Body>
-                                      <div className="d-flex justify-content-between align-items-start mb-2">
-                                        <h6 className="fw-bold mb-0">
-                                          {event.name}
-                                        </h6>
-                                        {event.price_type === "gratuit" ? (
-                                          <Badge bg="success">Gratuit</Badge>
-                                        ) : (
-                                          <Badge bg="danger">
-                                            {event.price} €
-                                          </Badge>
-                                        )}
-                                      </div>
-                                      <p className="text-muted small mb-1">
-                                        📅 {event.start_date}
-                                      </p>
-                                      <p className="text-muted small mb-2">
-                                        👥 {event.participants_count} /{" "}
-                                        {event.max_participants}
-                                      </p>
-                                      <Button
-                                        variant="outline-primary"
-                                        size="sm"
-                                        onClick={() =>
-                                          navigate(`/events/${event.id}`)
-                                        }
-                                      >
-                                        Voir
-                                      </Button>
-                                    </Card.Body>
-                                  </Card>
-                                </Col>
-                              ))}
-                          </Row>
-                        ) : (
-                          <p className="text-muted small mb-4">
-                            Aucun événement en cours.
-                          </p>
-                        )}
+          <h6 className="fw-bold text-success mb-3">🟢 En cours / À venir</h6>
+          {list.filter(e => e.user_id === user?.id && new Date(e.end_date) >= new Date()).length > 0 ? (
+            <Row className="g-3 mb-4">
+              {list.filter(e => e.user_id === user?.id && new Date(e.end_date) >= new Date()).map(event => (
+                <Col md={6} key={event.id}>
+                  <Card className="border-0 shadow-sm bg-light h-100">
+                    <Card.Body>
+                      <div className="d-flex justify-content-between align-items-start mb-2">
+                        <h6 className="fw-bold mb-0">{event.name}</h6>
+                        {event.price_type === "gratuit" ? <Badge bg="success">Gratuit</Badge> : <Badge bg="danger">{event.price} €</Badge>}
+                      </div>
+                      <p className="text-muted small mb-1">📅 {event.start_date}</p>
+                      <p className="text-muted small mb-2">👥 {event.participants_count} / {event.max_participants}</p>
+                      <Button variant="outline-primary" size="sm" onClick={() => navigate(`/events/${event.id}`)}>Voir</Button>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          ) : <p className="text-muted small mb-4">Aucun événement en cours.</p>}
 
-                        <h6 className="fw-bold text-secondary mb-3">
-                          ⚫ Passés
-                        </h6>
-                        {list.filter(
-                          (e) =>
-                            e.user_id === user?.id &&
-                            new Date(e.end_date) < new Date(),
-                        ).length > 0 ? (
-                          <Row className="g-3">
-                            {list
-                              .filter(
-                                (e) =>
-                                  e.user_id === user?.id &&
-                                  new Date(e.end_date) < new Date(),
-                              )
-                              .map((event) => (
-                                <Col md={6} key={event.id}>
-                                  <Card className="border-0 shadow-sm bg-light h-100 opacity-75">
-                                    <Card.Body>
-                                      <h6 className="fw-bold text-muted">
-                                        {event.name}
-                                      </h6>
-                                      <p className="text-muted small mb-1">
-                                        📅 {event.start_date}
-                                      </p>
-                                      <p className="text-muted small mb-0">
-                                        👥 {event.participants_count} /{" "}
-                                        {event.max_participants}
-                                      </p>
-                                    </Card.Body>
-                                  </Card>
-                                </Col>
-                              ))}
-                          </Row>
-                        ) : (
-                          <p className="text-muted small">
-                            Aucun événement passé.
-                          </p>
-                        )}
-                      </>
-                    )}
-                  </Card.Body>
-                </Card>
-              </Tab.Pane>
+          <h6 className="fw-bold text-secondary mb-3">⚫ Passés</h6>
+          {list.filter(e => e.user_id === user?.id && new Date(e.end_date) < new Date()).length > 0 ? (
+            <Row className="g-3 mb-4">
+              {list.filter(e => e.user_id === user?.id && new Date(e.end_date) < new Date()).map(event => (
+                <Col md={6} key={event.id}>
+                  <Card className="border-0 shadow-sm bg-light h-100 opacity-75">
+                    <Card.Body>
+                      <h6 className="fw-bold text-muted">{event.name}</h6>
+                      <p className="text-muted small mb-1">📅 {event.start_date}</p>
+                      <p className="text-muted small mb-0">👥 {event.participants_count} / {event.max_participants}</p>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          ) : <p className="text-muted small mb-4">Aucun événement passé.</p>}
+
+          <hr className="my-4" />
+          <h5 className="fw-bold mb-4">🎟️ Mes Inscriptions</h5>
+
+          <h6 className="fw-bold text-success mb-3">🟢 À venir</h6>
+          {myRegistrations.filter(e => new Date(e.end_date) >= new Date()).length > 0 ? (
+            <Row className="g-3 mb-4">
+              {myRegistrations.filter(e => new Date(e.end_date) >= new Date()).map(event => (
+                <Col md={6} key={event.id}>
+                  <Card className="border-0 shadow-sm bg-light h-100">
+                    <Card.Body>
+                      <div className="d-flex justify-content-between align-items-start mb-2">
+                        <h6 className="fw-bold mb-0">{event.name}</h6>
+                        {event.price_type === "gratuit" ? <Badge bg="success">Gratuit</Badge> : <Badge bg="danger">{event.price} €</Badge>}
+                      </div>
+                      <p className="text-muted small mb-1">📅 {event.start_date}</p>
+                      <p className="text-muted small mb-2">👤 {event.organizer_pseudo}</p>
+                      <Button variant="outline-primary" size="sm" onClick={() => navigate(`/events/${event.id}`)}>Voir</Button>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          ) : <p className="text-muted small mb-4">Aucune inscription à venir.</p>}
+
+          <h6 className="fw-bold text-secondary mb-3">⚫ Passées</h6>
+          {myRegistrations.filter(e => new Date(e.end_date) < new Date()).length > 0 ? (
+            <Row className="g-3">
+              {myRegistrations.filter(e => new Date(e.end_date) < new Date()).map(event => (
+                <Col md={6} key={event.id}>
+                  <Card className="border-0 shadow-sm bg-light h-100 opacity-75">
+                    <Card.Body>
+                      <h6 className="fw-bold text-muted">{event.name}</h6>
+                      <p className="text-muted small mb-1">📅 {event.start_date}</p>
+                      <p className="text-muted small mb-0">👤 {event.organizer_pseudo}</p>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          ) : <p className="text-muted small">Aucune inscription passée.</p>}
+        </>
+      )}
+    </Card.Body>
+  </Card>
+</Tab.Pane>
 
               <Tab.Pane eventKey="competences">
                 <Card className="border-0 shadow-sm rounded-4">
